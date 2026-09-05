@@ -91,8 +91,6 @@
   .btn-ghost{background:transparent; color:var(--muted); border:1px solid var(--border);}
   .btn-ghost:hover{color:var(--paper); border-color:var(--muted);}
   .btn-block{width:100%;}
-  .lock-hint{margin-top:16px; font-size:13px;}
-  .lock-hint button{background:none;border:none;color:var(--amber);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;font-family:inherit;}
 
   /* ---------- App shell ---------- */
   #app{display:none; min-height:100vh;}
@@ -295,8 +293,6 @@
     </div>
     <div class="lock-msg" id="lockMsg"></div>
     <button class="btn btn-amber btn-block" id="lockSubmit">دخول</button>
-    <div class="lock-hint" id="lockHint" style="display:none;">
-    </div>
   </div>
 </div>
 
@@ -411,7 +407,6 @@
   const lockTitle = document.getElementById('lockTitle');
   const lockSubtitle = document.getElementById('lockSubtitle');
   const lockSubmit = document.getElementById('lockSubmit');
-  const lockHint = document.getElementById('lockHint');
   let mode = 'checking'; // 'setup-1' | 'setup-2' | 'enter'
   let firstCodeTemp = null;
 
@@ -438,12 +433,10 @@
       mode = 'setup-1';
       lockTitle.textContent = 'أهلاً بك 👋';
       lockSubtitle.textContent = 'اختر رمز مكوّن من 4 أرقام لحماية دفترك';
-      lockHint.style.display = 'none';
     }else{
       mode = 'enter';
       lockTitle.textContent = 'دفتري';
       lockSubtitle.textContent = 'اكتب رمز الدخول';
-      lockHint.style.display = 'block';
     }
     setTimeout(()=>codeInputs[0].focus(), 200);
   }
@@ -482,15 +475,6 @@
         lockMsg.textContent = 'رمز غير صحيح، حاول مرة أخرى';
         clearInputs();
       }
-    }
-  });
-
-  document.getElementById('resetCode').addEventListener('click', async ()=>{
-    if(confirm('سيتم حذف الرمز الحالي وستحتاج لإنشاء رمز جديد. المحتوى الحالي لن يُحذف. متابعة؟')){
-      await storageDelete(STORAGE_KEYS.passcode);
-      firstCodeTemp = null;
-      clearInputs(false);
-      initLock();
     }
   });
 
