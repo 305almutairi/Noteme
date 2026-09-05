@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>دفتري</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Markazi+Text:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B2430;
+    --ink-deep:#141C26;
+    --panel:#232E3D;
+    --panel-light:#2C3A4D;
+    --paper:#F3EFE6;
+    --amber:#E8A34D;
+    --amber-dim:#B87F35;
+    --muted:#8FA3B8;
+    --success:#6FA98A;
+    --danger:#C4695A;
+    --border:rgba(243,239,230,0.09);
+    --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Tajawal',sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{font-family:'Markazi Text',serif;}
+  button, input, textarea, select{font-family:inherit;}
+  ::selection{background:var(--amber-dim);color:var(--ink-deep);}
+
+  /* ---------- Lock screen ---------- */
+  #lockScreen{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(ellipse 600px 400px at 50% 20%, rgba(232,163,77,0.10), transparent 70%),
+      var(--ink-deep);
+    z-index:100;
+    padding:24px;
+  }
+  .lock-card{
+    width:100%; max-width:380px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:36px 28px;
+    box-shadow:var(--shadow);
+    text-align:center;
+  }
+  .lamp-glow{
+    width:64px; height:64px; margin:0 auto 18px;
+    border-radius:50%;
+    background:radial-gradient(circle, var(--amber) 0%, rgba(232,163,77,0.15) 60%, transparent 75%);
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px;
+  }
+  .lock-card h1{font-size:30px; margin:0 0 6px; color:var(--paper); font-weight:600;}
+  .lock-card p{color:var(--muted); font-size:14.5px; margin:0 0 24px; line-height:1.6;}
+  .code-inputs{
+    display:flex; gap:10px; justify-content:center; margin-bottom:18px; direction:ltr;
+  }
+  .code-inputs input{
+    width:46px; height:56px;
+    text-align:center;
+    font-size:24px;
+    background:var(--ink);
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    color:var(--paper);
+    outline:none;
+    transition:border-color .2s;
+  }
+  .code-inputs input:focus{border-color:var(--amber);}
+  .lock-msg{min-height:20px; font-size:13.5px; color:var(--danger); margin-bottom:10px;}
+  .btn{
+    appearance:none; border:none; cursor:pointer;
+    border-radius:10px; padding:13px 20px;
+    font-size:15.5px; font-weight:700;
+    transition:transform .12s ease, opacity .12s ease, background .15s;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-amber{background:var(--amber); color:var(--ink-deep);}
+  .btn-amber:hover{background:#f0ac57;}
+  .btn-ghost{background:transparent; color:var(--muted); border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--paper); border-color:var(--muted);}
+  .btn-block{width:100%;}
+  .lock-hint{margin-top:16px; font-size:13px;}
+  .lock-hint button{background:none;border:none;color:var(--amber);cursor:pointer;font-size:13px;text-decoration:underline;padding:0;font-family:inherit;}
+
+  /* ---------- App shell ---------- */
+  #app{display:none; min-height:100vh;}
+  #app.visible{display:flex;}
+  @keyframes riseIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  #app.visible{animation:riseIn .45s ease both;}
+
+  .sidebar{
+    width:220px; flex-shrink:0;
+    background:var(--ink-deep);
+    border-left:1px solid var(--border);
+    padding:28px 18px;
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh;
+  }
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:34px; padding:0 6px;}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(160deg, var(--amber), var(--amber-dim)); display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .brand h1{font-size:22px; margin:0; color:var(--paper); font-weight:600;}
+  .nav-tab{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 14px; border-radius:10px;
+    color:var(--muted); cursor:pointer; margin-bottom:6px;
+    font-size:15px; font-weight:500;
+    border:1px solid transparent;
+    transition:background .15s, color .15s;
+    background:none;
+    text-align:right; width:100%;
+  }
+  .nav-tab .ic{font-size:17px; width:20px; text-align:center;}
+  .nav-tab:hover{background:var(--panel); color:var(--paper);}
+  .nav-tab.active{background:var(--panel); color:var(--amber); border-color:var(--border);}
+  .sidebar-footer{margin-top:auto; padding-top:16px; border-top:1px solid var(--border);}
+  .sidebar-footer button{width:100%; margin-top:8px; font-size:13px;}
+
+  .main{flex:1; min-width:0; padding:32px 40px 100px;}
+  .topbar{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; flex-wrap:wrap; gap:14px;}
+  .topbar .greet{color:var(--muted); font-size:14px; margin-bottom:4px;}
+  .topbar h2{font-size:30px; margin:0; color:var(--paper); font-weight:600;}
+  .add-btn{display:flex; align-items:center; gap:8px;}
+
+  .stats-row{display:flex; gap:14px; margin-bottom:26px; flex-wrap:wrap;}
+  .stat-chip{background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px 18px; min-width:110px;}
+  .stat-chip .num{font-family:'Markazi Text',serif; font-size:26px; color:var(--amber); font-weight:700; line-height:1;}
+  .stat-chip .lbl{font-size:12.5px; color:var(--muted); margin-top:4px;}
+
+  .card-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:16px;}
+  .item-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 18px 16px;
+    position:relative;
+    background-image: repeating-linear-gradient(var(--panel) 0 27px, rgba(243,239,230,0.035) 27px 28px);
+  }
+  .item-card .tag{
+    display:inline-block; font-size:11.5px; padding:3px 10px; border-radius:100px;
+    background:rgba(232,163,77,0.14); color:var(--amber); margin-bottom:10px; font-weight:700;
+  }
+  .item-card.done .tag{background:rgba(111,169,138,0.16); color:var(--success);}
+  .item-card h3{margin:0 0 8px; font-size:19px; color:var(--paper); font-weight:600; line-height:1.35;}
+  .item-card p{margin:0 0 10px; font-size:14px; color:var(--muted); line-height:1.7; white-space:pre-wrap;}
+  .item-card .meta{display:flex; justify-content:space-between; align-items:center; font-size:12.5px; color:var(--muted); margin-top:12px; padding-top:10px; border-top:1px solid var(--border);}
+  .icon-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:4px 6px;border-radius:6px;}
+  .icon-btn:hover{color:var(--danger); background:rgba(196,105,90,0.1);}
+  .card-actions{display:flex; gap:4px;}
+
+  .status-pill{border:none;border-radius:100px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+  .status-todo{background:rgba(143,163,184,0.18); color:var(--muted);}
+  .status-doing{background:rgba(232,163,77,0.18); color:var(--amber);}
+  .status-done{background:rgba(111,169,138,0.18); color:var(--success);}
+
+  .media-strip{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px;}
+  .media-thumb{position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden; border:1px solid var(--border); flex-shrink:0;}
+  .media-thumb img{width:100%; height:100%; object-fit:cover; display:block; cursor:pointer;}
+  .media-thumb .dl-btn{
+    position:absolute; bottom:0; left:0; right:0;
+    background:rgba(20,28,38,0.75); color:var(--paper);
+    font-size:10px; text-align:center; padding:2px 0; text-decoration:none;
+  }
+  .media-thumb .dl-btn:hover{background:rgba(232,163,77,0.85); color:var(--ink-deep);}
+
+  .media-file{
+    display:flex; align-items:center; gap:6px;
+    background:var(--ink); border:1px solid var(--border); border-radius:8px;
+    padding:8px 10px; font-size:12px; color:var(--paper); text-decoration:none;
+    max-width:170px;
+  }
+  .media-file:hover{border-color:var(--amber); color:var(--amber);}
+  .mf-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .mf-icon{font-size:15px; flex-shrink:0;}
+
+  .upload-thumb.upload-file-chip{
+    width:76px; height:76px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; background:var(--ink); padding:4px;
+  }
+  .upload-thumb.upload-file-chip .uf-icon{font-size:22px;}
+  .upload-thumb.upload-file-chip .uf-name{
+    font-size:9px; color:var(--muted); max-width:68px; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap; text-align:center;
+  }
+
+  .upload-area{
+    border:1.5px dashed var(--border); border-radius:12px; padding:16px;
+    text-align:center; cursor:pointer; color:var(--muted); font-size:13.5px;
+    transition:border-color .15s, color .15s;
+  }
+  .upload-area:hover{border-color:var(--amber); color:var(--amber);}
+  .upload-preview{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+  .upload-thumb{position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden; border:1px solid var(--border);}
+  .upload-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .upload-thumb .rm{
+    position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+    background:rgba(20,28,38,0.85); color:var(--paper); border:none; font-size:11px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  .upload-thumb .rm:hover{background:var(--danger);}
+  .upload-hint{font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.6;}
+
+  .empty-state{
+    grid-column:1/-1;
+    text-align:center; padding:60px 20px;
+    color:var(--muted);
+    border:1.5px dashed var(--border);
+    border-radius:16px;
+  }
+  .empty-state .em-ic{font-size:34px; margin-bottom:12px; opacity:.7;}
+  .empty-state p{margin:0 0 16px; font-size:14.5px;}
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(10,14,20,0.6);
+    display:none; align-items:flex-end; justify-content:center; z-index:50;
+    backdrop-filter:blur(2px);
+  }
+  .overlay.open{display:flex;}
+  @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal{
+    background:var(--panel); width:100%; max-width:460px;
+    border-radius:20px 20px 0 0;
+    padding:26px 24px 30px;
+    border:1px solid var(--border); border-bottom:none;
+    animation:slideUp .25s ease both;
+    max-height:88vh; overflow-y:auto;
+  }
+  @media(min-width:720px){
+    .overlay{align-items:center;}
+    .modal{border-radius:18px; border-bottom:1px solid var(--border);}
+  }
+  .modal h3{margin:0 0 18px; font-size:22px; font-weight:600;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px;}
+  .field input, .field textarea, .field select{
+    width:100%; background:var(--ink); border:1.5px solid var(--border);
+    border-radius:10px; padding:11px 13px; color:var(--paper); font-size:14.5px; outline:none;
+    transition:border-color .15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{border-color:var(--amber);}
+  .field textarea{resize:vertical; min-height:90px; line-height:1.6;}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;}
+  .modal-actions .btn{flex:1;}
+
+  /* ---------- Mobile ---------- */
+  .bottom-nav{display:none;}
+  @media (max-width:860px){
+    .sidebar{display:none;}
+    .main{padding:22px 16px 96px;}
+    .topbar h2{font-size:25px;}
+    .bottom-nav{
+      display:flex; position:fixed; bottom:0; right:0; left:0;
+      background:var(--ink-deep); border-top:1px solid var(--border);
+      padding:8px 6px calc(env(safe-area-inset-bottom) + 8px);
+      z-index:40; justify-content:space-around;
+    }
+    .bottom-nav button{
+      background:none; border:none; color:var(--muted); font-size:11.5px;
+      display:flex; flex-direction:column; align-items:center; gap:4px;
+      padding:6px 10px; cursor:pointer; font-weight:600;
+    }
+    .bottom-nav button .ic{font-size:19px;}
+    .bottom-nav button.active{color:var(--amber);}
+    .lock-header-actions{display:none;}
+  }
+  .top-lock-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;}
+  .top-lock-btn:hover{color:var(--paper);}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="lamp-glow">💡</div>
+    <h1 id="lockTitle">دفتري</h1>
+    <p id="lockSubtitle">اكتب رمز الدخول المكوّن من 4 أرقام</p>
+    <div class="code-inputs" id="codeInputs">
+      <input maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input maxlength="1" inputmode="numeric" pattern="[0-9]*">
+      <input maxlength="1" inputmode="numeric" pattern="[0-9]*">
+    </div>
+    <div class="lock-msg" id="lockMsg"></div>
+    <button class="btn btn-amber btn-block" id="lockSubmit">دخول</button>
+    <div class="lock-hint" id="lockHint" style="display:none;">
+      نسيت الرمز؟ <button id="resetCode">إعادة تعيين الدفتر</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">📖</div>
+      <h1>دفتري</h1>
+    </div>
+    <button class="nav-tab active" data-tab="notes"><span class="ic">📝</span> ملاحظاتي</button>
+    <button class="nav-tab" data-tab="achievements"><span class="ic">🏅</span> إنجازاتي</button>
+    <button class="nav-tab" data-tab="plans"><span class="ic">🎯</span> خططي</button>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-block" id="lockNowDesktop">🔒 قفل الدفتر</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="greet" id="greetLine"></div>
+        <h2 id="pageTitle">ملاحظاتي</h2>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="top-lock-btn lock-header-actions" id="lockNowMobileTop">🔒 قفل</button>
+        <button class="btn btn-amber add-btn" id="addBtn">+ إضافة</button>
+      </div>
+    </div>
+
+    <div class="stats-row" id="statsRow"></div>
+    <div class="card-grid" id="cardGrid"></div>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="active" data-tab="notes"><span class="ic">📝</span> ملاحظات</button>
+    <button data-tab="achievements"><span class="ic">🏅</span> إنجازات</button>
+    <button data-tab="plans"><span class="ic">🎯</span> خطط</button>
+  </nav>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEYS = { notes:'notes', achievements:'achievements', plans:'plans', passcode:'app-passcode' };
+  let state = { tab:'notes', notes:[], achievements:[], plans:[], editingId:null };
+  let tempAttachments = [];
+
+  function guessMime(name){
+    const ext = (name||'').split('.').pop().toLowerCase();
+    if(ext==='zip') return 'application/zip';
+    if(ext==='rar') return 'application/x-rar-compressed';
+    return 'application/octet-stream';
+  }
+  function attachmentIcon(name){
+    const ext = (name||'').split('.').pop().toLowerCase();
+    if(ext==='zip') return '🗂️';
+    if(ext==='rar') return '🗜️';
+    return '📎';
+  }
+  function fileToDataURL(file){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = (e)=> resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ---------- storage helpers ----------
+  // Uses the browser's own localStorage so the site works fully on its own —
+  // no Claude session or internet connection required to save your data.
+  const memoryFallback = {};
+  async function storageGet(key){
+    try{
+      const v = localStorage.getItem('daftari:'+key);
+      return v;
+    }catch(e){ /* localStorage unavailable (rare, e.g. private mode with it disabled) */ }
+    return memoryFallback[key] ?? null;
+  }
+  async function storageSet(key, value){
+    try{
+      localStorage.setItem('daftari:'+key, value);
+      return true;
+    }catch(e){ /* storage full or blocked, fall back to memory for this session only */ }
+    memoryFallback[key] = value;
+    return false;
+  }
+  async function storageDelete(key){
+    try{
+      localStorage.removeItem('daftari:'+key);
+    }catch(e){}
+    delete memoryFallback[key];
+  }
+
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function formatDate(iso){
+    if(!iso) return '';
+    const d = new Date(iso+'T00:00:00');
+    return d.toLocaleDateString('ar-SA', {day:'numeric', month:'long', year:'numeric'});
+  }
+
+  // ---------- Lock screen logic ----------
+  const lockScreen = document.getElementById('lockScreen');
+  const codeInputs = [...document.querySelectorAll('#codeInputs input')];
+  const lockMsg = document.getElementById('lockMsg');
+  const lockTitle = document.getElementById('lockTitle');
+  const lockSubtitle = document.getElementById('lockSubtitle');
+  const lockSubmit = document.getElementById('lockSubmit');
+  const lockHint = document.getElementById('lockHint');
+  let mode = 'checking'; // 'setup-1' | 'setup-2' | 'enter'
+  let firstCodeTemp = null;
+
+  codeInputs.forEach((inp, idx)=>{
+    inp.addEventListener('input', ()=>{
+      inp.value = inp.value.replace(/[^0-9]/g,'');
+      if(inp.value && idx < codeInputs.length-1) codeInputs[idx+1].focus();
+    });
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key==='Backspace' && !inp.value && idx>0) codeInputs[idx-1].focus();
+      if(e.key==='Enter') lockSubmit.click();
+    });
+  });
+
+  function clearInputs(focus=true){
+    codeInputs.forEach(i=>i.value='');
+    if(focus) codeInputs[0].focus();
+  }
+  function currentCode(){ return codeInputs.map(i=>i.value).join(''); }
+
+  async function initLock(){
+    const saved = await storageGet(STORAGE_KEYS.passcode);
+    if(!saved){
+      mode = 'setup-1';
+      lockTitle.textContent = 'أهلاً بك 👋';
+      lockSubtitle.textContent = 'اختر رمز مكوّن من 4 أرقام لحماية دفترك';
+      lockHint.style.display = 'none';
+    }else{
+      mode = 'enter';
+      lockTitle.textContent = 'دفتري';
+      lockSubtitle.textContent = 'اكتب رمز الدخول';
+      lockHint.style.display = 'block';
+    }
+    setTimeout(()=>codeInputs[0].focus(), 200);
+  }
+
+  lockSubmit.addEventListener('click', async ()=>{
+    const code = currentCode();
+    if(code.length !== 4){
+      lockMsg.textContent = 'أكمل الأرقام الأربعة أولاً';
+      return;
+    }
+    if(mode === 'setup-1'){
+      firstCodeTemp = code;
+      mode = 'setup-2';
+      lockSubtitle.textContent = 'أكّد الرمز مرة ثانية';
+      lockMsg.textContent = '';
+      clearInputs();
+    }else if(mode === 'setup-2'){
+      if(code !== firstCodeTemp){
+        lockMsg.textContent = 'الرمزان غير متطابقين، حاول من جديد';
+        mode = 'setup-1';
+        lockSubtitle.textContent = 'اختر رمز مكوّن من 4 أرقام لحماية دفترك';
+        clearInputs();
+        return;
+      }
+      await storageSet(STORAGE_KEYS.passcode, code);
+      lockMsg.style.color = 'var(--success)';
+      lockMsg.textContent = 'تم حفظ الرمز ✓';
+      unlockApp();
+    }else if(mode === 'enter'){
+      const saved = await storageGet(STORAGE_KEYS.passcode);
+      if(code === saved){
+        lockMsg.textContent = '';
+        unlockApp();
+      }else{
+        lockMsg.style.color = 'var(--danger)';
+        lockMsg.textContent = 'رمز غير صحيح، حاول مرة أخرى';
+        clearInputs();
+      }
+    }
+  });
+
+  document.getElementById('resetCode').addEventListener('click', async ()=>{
+    if(confirm('سيتم حذف الرمز الحالي وستحتاج لإنشاء رمز جديد. المحتوى الحالي لن يُحذف. متابعة؟')){
+      await storageDelete(STORAGE_KEYS.passcode);
+      firstCodeTemp = null;
+      clearInputs(false);
+      initLock();
+    }
+  });
+
+  function unlockApp(){
+    setTimeout(()=>{
+      lockScreen.style.transition = 'opacity .35s ease';
+      lockScreen.style.opacity = '0';
+      setTimeout(()=>{ lockScreen.style.display='none'; }, 350);
+      document.getElementById('app').classList.add('visible');
+      boot();
+    }, 350);
+  }
+
+  function relock(){
+    document.getElementById('app').classList.remove('visible');
+    lockScreen.style.display='flex';
+    lockScreen.style.opacity='1';
+    mode = 'enter';
+    lockTitle.textContent = 'دفتري';
+    lockSubtitle.textContent = 'اكتب رمز الدخول';
+    lockMsg.textContent = '';
+    clearInputs();
+  }
+  document.getElementById('lockNowDesktop').addEventListener('click', relock);
+  document.getElementById('lockNowMobileTop').addEventListener('click', relock);
+
+  // ---------- App boot ----------
+  let booted = false;
+  async function boot(){
+    if(booted){ render(); return; }
+    booted = true;
+    const [n, a, p] = await Promise.all([
+      storageGet(STORAGE_KEYS.notes),
+      storageGet(STORAGE_KEYS.achievements),
+      storageGet(STORAGE_KEYS.plans)
+    ]);
+    state.notes = n ? JSON.parse(n) : [];
+    state.achievements = a ? JSON.parse(a) : [];
+    state.plans = p ? JSON.parse(p) : [];
+    setGreeting();
+    bindNav();
+    document.getElementById('addBtn').addEventListener('click', ()=>openModal());
+    render();
+  }
+
+  function setGreeting(){
+    const h = new Date().getHours();
+    let g = 'مساء الخير';
+    if(h < 12) g = 'صباح الخير';
+    else if(h < 17) g = 'طاب يومك';
+    document.getElementById('greetLine').textContent = g + ' — استمر في التقدم 🌙';
+  }
+
+  function bindNav(){
+    document.querySelectorAll('.nav-tab, .bottom-nav button').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        state.tab = btn.dataset.tab;
+        document.querySelectorAll('.nav-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===state.tab));
+        document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active', b.dataset.tab===state.tab));
+        render();
+      });
+    });
+  }
+
+  const titles = { notes:'ملاحظاتي', achievements:'إنجازاتي', plans:'خططي' };
+  const emptyCopy = {
+    notes: {ic:'📝', text:'لم تُضف أي ملاحظة بعد. اضغط "إضافة" لتبدأ أول ملاحظة، وتقدر ترفق صور معها.'},
+    achievements: {ic:'🏅', text:'سجل أول إنجاز لك وابدأ في بناء قائمتك.'},
+    plans: {ic:'🎯', text:'لا توجد خطط حالياً. أضف هدفك القادم.'}
+  };
+
+  async function persist(){
+    const okNotes = await storageSet(STORAGE_KEYS.notes, JSON.stringify(state.notes));
+    const okAch = await storageSet(STORAGE_KEYS.achievements, JSON.stringify(state.achievements));
+    const okPlans = await storageSet(STORAGE_KEYS.plans, JSON.stringify(state.plans));
+    if(!okNotes || !okAch || !okPlans){
+      alert('تنبيه: وصلت لحد مساحة التخزين المتاحة في المتصفح، فآخر تعديل ما انحفظ بشكل دائم وبيروح إذا سكّرت الصفحة. جرّب تحذف مرفقات كبيرة أو قديمة عشان تفرّغ مساحة.');
+    }
+  }
+
+  function render(){
+    document.getElementById('pageTitle').textContent = titles[state.tab];
+    renderStats();
+    renderGrid();
+  }
+
+  function renderStats(){
+    const row = document.getElementById('statsRow');
+    row.innerHTML = '';
+    if(state.tab === 'notes'){
+      chip(row, state.notes.length, 'ملاحظة مسجّلة');
+      const withMedia = state.notes.filter(n=>n.attachments && n.attachments.length).length;
+      chip(row, withMedia, 'فيها وسائط مرفقة');
+    }else if(state.tab === 'achievements'){
+      chip(row, state.achievements.length, 'إنجاز محقق');
+      const thisYear = state.achievements.filter(a=>a.date && a.date.slice(0,4)===String(new Date().getFullYear())).length;
+      chip(row, thisYear, 'هذا العام');
+    }else{
+      chip(row, state.plans.filter(p=>p.status==='done').length, 'خطة منجزة');
+      chip(row, state.plans.filter(p=>p.status==='doing').length, 'قيد التنفيذ');
+      chip(row, state.plans.filter(p=>p.status==='todo').length, 'لم تبدأ');
+    }
+  }
+  function chip(row, num, label){
+    const el = document.createElement('div');
+    el.className = 'stat-chip';
+    el.innerHTML = `<div class="num">${num}</div><div class="lbl">${label}</div>`;
+    row.appendChild(el);
+  }
+
+  function renderGrid(){
+    const grid = document.getElementById('cardGrid');
+    grid.innerHTML = '';
+    const list = state[state.tab];
+    if(!list.length){
+      const ec = emptyCopy[state.tab];
+      grid.innerHTML = `<div class="empty-state"><div class="em-ic">${ec.ic}</div><p>${ec.text}</p>
+        <button class="btn btn-amber" onclick="document.getElementById('addBtn').click()">+ إضافة الآن</button></div>`;
+      return;
+    }
+    const sorted = [...list].sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+    sorted.forEach(item=>{
+      const card = document.createElement('div');
+      card.className = 'item-card' + (item.status==='done' ? ' done' : '');
+      let tagHtml = '';
+      if(state.tab==='achievements') tagHtml = `<span class="tag">🏅 إنجاز</span>`;
+      let mediaHtml = '';
+      if(item.attachments && item.attachments.length){
+        mediaHtml = '<div class="media-strip">' + item.attachments.map((raw, i)=>{
+          const att = typeof raw === 'string' ? {name:null, mime:'image/jpeg', data:raw} : raw;
+          const isImage = att.mime && att.mime.startsWith('image/');
+          if(isImage){
+            const mimeMatch = att.data.match(/^data:image\/([a-zA-Z0-9.+-]+);/);
+            const ext = mimeMatch ? mimeMatch[1].replace('jpeg','jpg') : 'jpg';
+            const filename = att.name || `${item.title||'مرفق'}-${i+1}.${ext}`;
+            return `
+          <div class="media-thumb">
+            <img src="${att.data}" data-view="${item.id}:${i}">
+            <a class="dl-btn" href="${att.data}" download="${escapeHtml(filename)}">تحميل</a>
+          </div>`;
+          }
+          const filename = att.name || `مرفق-${i+1}`;
+          return `
+          <a class="media-file" href="${att.data}" download="${escapeHtml(filename)}">
+            <span class="mf-icon">${attachmentIcon(att.name)}</span>
+            <span class="mf-name">${escapeHtml(filename)}</span>
+          </a>`;
+        }).join('') + '</div>';
+      }
+      let bodyHtml = `<h3>${escapeHtml(item.title)}</h3>`;
+      bodyHtml += mediaHtml;
+      if(item.content) bodyHtml += `<p>${escapeHtml(item.content)}</p>`;
+      if(item.description) bodyHtml += `<p>${escapeHtml(item.description)}</p>`;
+      let metaRight = formatDate(item.date);
+      let statusHtml = '';
+      if(state.tab==='plans'){
+        const labels = {todo:'لم تبدأ', doing:'قيد التنفيذ', done:'مكتملة'};
+        statusHtml = `<button class="status-pill status-${item.status}" data-cycle="${item.id}">${labels[item.status]}</button>`;
+        metaRight = (item.dueDate ? 'الموعد: '+formatDate(item.dueDate) : 'بدون موعد');
+      }
+      card.innerHTML = `
+        ${tagHtml}
+        ${bodyHtml}
+        <div class="meta">
+          <span>${metaRight}</span>
+          <div class="card-actions">
+            ${statusHtml}
+            <button class="icon-btn" data-edit="${item.id}" title="تعديل">✏️</button>
+            <button class="icon-btn" data-del="${item.id}" title="حذف">🗑️</button>
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+
+    grid.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click', ()=>openModal(b.dataset.edit)));
+    grid.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', ()=>deleteItem(b.dataset.del)));
+    grid.querySelectorAll('[data-cycle]').forEach(b=>b.addEventListener('click', ()=>cycleStatus(b.dataset.cycle)));
+    grid.querySelectorAll('[data-view]').forEach(img=>img.addEventListener('click', ()=>{
+      const [itemId, idx] = img.dataset.view.split(':');
+      const it = state[state.tab].find(x=>x.id===itemId);
+      const raw = it && it.attachments && it.attachments[idx];
+      if(raw){
+        const src = typeof raw === 'string' ? raw : raw.data;
+        window.open(src, '_blank');
+      }
+    }));
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str ?? '';
+    return d.innerHTML;
+  }
+
+  function cycleStatus(id){
+    const item = state.plans.find(p=>p.id===id);
+    const order = ['todo','doing','done'];
+    item.status = order[(order.indexOf(item.status)+1) % order.length];
+    persist(); render();
+  }
+
+  function deleteItem(id){
+    if(!confirm('حذف هذا العنصر نهائياً؟')) return;
+    state[state.tab] = state[state.tab].filter(i=>i.id!==id);
+    persist(); render();
+  }
+
+  // ---------- Modal ----------
+  const overlay = document.getElementById('overlay');
+  const modalBody = document.getElementById('modalBody');
+
+  function openModal(editId){
+    state.editingId = editId || null;
+    const existing = editId ? state[state.tab].find(i=>i.id===editId) : null;
+    let html = '';
+    if(state.tab === 'notes'){
+      tempAttachments = existing && existing.attachments ? [...existing.attachments] : [];
+      html = `
+        <h3>${existing ? 'تعديل الملاحظة' : 'ملاحظة جديدة'}</h3>
+        <div class="field"><label>العنوان</label><input id="f_title" value="${existing?escapeHtml(existing.title):''}" placeholder="مثال: أفكار مشروع، خطوات مهمة..."></div>
+        <div class="field"><label>التفاصيل</label><textarea id="f_content" placeholder="اكتب ملاحظتك هنا...">${existing?escapeHtml(existing.content||''):''}</textarea></div>
+        <div class="field">
+          <label>مرفقات: صور، ZIP، RAR (اختياري)</label>
+          <div class="upload-area" id="uploadArea">اضغط هنا لإرفاق صور أو ملفات ZIP/RAR 📎</div>
+          <input type="file" id="f_media" accept="image/*,.zip,.rar,application/zip,application/x-rar-compressed,application/vnd.rar" multiple style="display:none;">
+          <div class="upload-preview" id="uploadPreview"></div>
+          <div class="upload-hint">أفضل أداء مع ملفات أصغر من 3 ميجا لكل ملف، لأن مساحة تخزين المتصفح محدودة.</div>
+        </div>
+        <div class="field"><label>التاريخ</label><input id="f_date" type="date" value="${existing?existing.date:todayISO()}"></div>`;
+    }else if(state.tab === 'achievements'){
+      html = `
+        <h3>${existing ? 'تعديل الإنجاز' : 'إنجاز جديد'}</h3>
+        <div class="field"><label>عنوان الإنجاز</label><input id="f_title" value="${existing?escapeHtml(existing.title):''}" placeholder="مثال: إكمال دورة البرمجة"></div>
+        <div class="field"><label>التفاصيل (اختياري)</label><textarea id="f_content" placeholder="ما الذي حققته بالضبط؟">${existing?escapeHtml(existing.description||''):''}</textarea></div>
+        <div class="field"><label>التاريخ</label><input id="f_date" type="date" value="${existing?existing.date:todayISO()}"></div>`;
+    }else{
+      html = `
+        <h3>${existing ? 'تعديل الخطة' : 'خطة جديدة'}</h3>
+        <div class="field"><label>عنوان الهدف</label><input id="f_title" value="${existing?escapeHtml(existing.title):''}" placeholder="مثال: إنهاء مشروع التخرج"></div>
+        <div class="field"><label>تفاصيل (اختياري)</label><textarea id="f_content" placeholder="خطوات أو ملاحظات">${existing?escapeHtml(existing.description||''):''}</textarea></div>
+        <div class="field"><label>الحالة</label>
+          <select id="f_status">
+            <option value="todo" ${existing?.status==='todo'?'selected':''}>لم تبدأ</option>
+            <option value="doing" ${existing?.status==='doing'?'selected':''}>قيد التنفيذ</option>
+            <option value="done" ${existing?.status==='done'?'selected':''}>مكتملة</option>
+          </select>
+        </div>
+        <div class="field"><label>الموعد المستهدف</label><input id="f_date" type="date" value="${existing?existing.dueDate||'':''}"></div>`;
+    }
+    html += `<div class="modal-actions">
+        <button class="btn btn-ghost" id="cancelModal">إلغاء</button>
+        <button class="btn btn-amber" id="saveModal">${existing?'حفظ التعديل':'إضافة'}</button>
+      </div>`;
+    modalBody.innerHTML = html;
+    overlay.classList.add('open');
+    document.getElementById('cancelModal').addEventListener('click', closeModal);
+    document.getElementById('saveModal').addEventListener('click', saveModal);
+
+    if(state.tab === 'notes'){
+      renderUploadPreview();
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('f_media');
+      uploadArea.addEventListener('click', ()=>fileInput.click());
+      fileInput.addEventListener('change', async ()=>{
+        const files = [...fileInput.files];
+        if(!files.length) return;
+        uploadArea.textContent = 'جارٍ رفع الملفات...';
+        for(const file of files){
+          try{
+            const dataUrl = await fileToDataURL(file);
+            tempAttachments.push({ name:file.name, mime:file.type || guessMime(file.name), data:dataUrl });
+          }catch(e){ /* skip file that failed to read */ }
+        }
+        uploadArea.textContent = 'اضغط هنا لإرفاق صور أو ملفات ZIP/RAR 📎';
+        fileInput.value = '';
+        renderUploadPreview();
+      });
+    }
+
+    setTimeout(()=>document.getElementById('f_title')?.focus(), 100);
+  }
+
+  function renderUploadPreview(){
+    const box = document.getElementById('uploadPreview');
+    if(!box) return;
+    box.innerHTML = tempAttachments.map((att, i)=>{
+      const isImage = att.mime && att.mime.startsWith('image/');
+      if(isImage){
+        return `<div class="upload-thumb">
+          <img src="${att.data}">
+          <button type="button" class="rm" data-rm="${i}">✕</button>
+        </div>`;
+      }
+      return `<div class="upload-thumb upload-file-chip">
+        <div class="uf-icon">${attachmentIcon(att.name)}</div>
+        <div class="uf-name">${escapeHtml(att.name||'ملف')}</div>
+        <button type="button" class="rm" data-rm="${i}">✕</button>
+      </div>`;
+    }).join('');
+    box.querySelectorAll('[data-rm]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        tempAttachments.splice(Number(btn.dataset.rm), 1);
+        renderUploadPreview();
+      });
+    });
+  }
+
+  function closeModal(){
+    overlay.classList.remove('open');
+    state.editingId = null;
+    tempAttachments = [];
+  }
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModal(); });
+
+  function saveModal(){
+    const title = document.getElementById('f_title').value.trim();
+    if(!title){ document.getElementById('f_title').focus(); return; }
+    const list = state[state.tab];
+    let item = state.editingId ? list.find(i=>i.id===state.editingId) : null;
+    const isNew = !item;
+    if(isNew){ item = { id: uid() }; }
+
+    if(state.tab === 'notes'){
+      item.title = title;
+      item.content = document.getElementById('f_content').value.trim();
+      item.date = document.getElementById('f_date').value || todayISO();
+      item.attachments = [...tempAttachments];
+    }else if(state.tab === 'achievements'){
+      item.title = title;
+      item.description = document.getElementById('f_content').value.trim();
+      item.date = document.getElementById('f_date').value || todayISO();
+    }else{
+      item.title = title;
+      item.description = document.getElementById('f_content').value.trim();
+      item.status = document.getElementById('f_status').value;
+      item.dueDate = document.getElementById('f_date').value || '';
+      item.date = item.date || todayISO();
+    }
+    if(isNew) list.push(item);
+    persist();
+    closeModal();
+    render();
+  }
+
+  // kick things off
+  initLock();
+})();
+</script>
+</body>
+</html>
